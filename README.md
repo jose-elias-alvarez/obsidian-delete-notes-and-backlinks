@@ -1,96 +1,60 @@
-# Obsidian Sample Plugin
+# Obsidian Delete Notes and Backlinks
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+A simple plugin to automatically delete backlinks when deleting Obsidian notes.
 
-This project uses Typescript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
+## Warning
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+**Deleting backlinks is a destructive operation and cannot be undone**. Use this plugin with caution and be sure to back up your vault, especially when bulk deleting notes.
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+By default, deleted notes are sent to the system trash and can be recovered, but if you configure the plugin to permanently delete notes, they cannot be recovered.
 
-## First time developing plugins?
+## Usage
 
-Quick starting guide for new plugin devs:
+The plugin adds two commands:
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+-   Delete current note and backlinks: operates on the current note
+-   Bulk delete notes and backlinks: operates on a newline-separated list of notes
 
-## Releasing new releases
+Each command runs through the following steps:
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+1. Prompts for confirmation according to the configuration in [Confirmation](#confirmation)
+2. Deletes the note(s) passed to the command according to the configuration in [Deletion](#deletion)
+3. Deletes backlinks to the note(s) according to the logic in [Backlink Deletion](#backlink-deletion)
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+## Confirmation
 
-## Adding your plugin to the community plugin list
+By default, the plugin prompts for confirmation on all operations. You can disable confirmation for the following operations:
 
-- Check https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+-   Confirm when deleting single note
+-   Confirm when deleting multiple notes
+-   Confirm when deleting notes with no backlinks
 
-## How to use
+## Deletion
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+By default, the plugin sends deleted notes to the system trash. You can select from the following options:
 
-## Manually installing the plugin
+-   Move to system trash
+-   Move to Obsidian trash (.trash folder)
+-   Permanently delete
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+## Backlink Deletion
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
+The plugin deletes backlinks by replacing internal links with the link's display text. Let's say you have the following internal links pointing at the note `KFC`:
 
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+```markdown
+Today I went to [[KFC]] and it was great.
 ```
 
-If you have multiple URLs, you can also do:
-
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
+```markdown
+[[KFC|Kentucky Fried Chicken|]] is okay, but [[Popeye's]] is clearly better.
 ```
 
-## API Documentation
+When you delete the note, the plugin will find its backlinks and replace them with the following:
 
-See https://github.com/obsidianmd/obsidian-api
+```markdown
+Today I went to KFC and it was great.
+```
+
+```markdown
+Kentucky Fried Chicken is okay, but [[Popeye's]] is clearly better.
+```
