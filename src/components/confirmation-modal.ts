@@ -14,6 +14,29 @@ export class DeleteNotesConfirmationModal extends Modal {
         this.plugin = plugin;
     }
 
+    // workaround to open links from the modal
+    // it's also possible to use real links + the obsidian URI scheme
+    // but either way we need to hook into the event to close the modal,
+    // so we might as well make it a little nicer
+    createClickableWikilink(el: HTMLElement, linkPath: string) {
+        const link = el.createEl("a", {
+            text: linkPath,
+            attr: {
+                text: `[[${linkPath}]]`,
+            },
+        });
+        link.addEventListener("click", (e) => {
+            e.preventDefault();
+            this.close();
+            this.app.workspace.openLinkText(
+                linkPath,
+                "",
+                e.ctrlKey || e.metaKey
+            );
+        });
+        return link;
+    }
+
     shouldDeleteWithoutConfirmation() {
         if (
             !this.plugin.settings.confirmOnDeleteSingleNote &&
@@ -62,13 +85,19 @@ export class DeleteNotesConfirmationModal extends Modal {
             )} and any associated backlinks? This cannot be undone!`,
         });
         for (const note of this.notes) {
-            contentEl.createEl("strong", { text: note.file.path });
+            this.createClickableWikilink(
+                contentEl.createEl("strong"),
+                note.file.path
+            );
             const list = contentEl.createEl("ul");
             for (const linkedFile of note.linkedFiles) {
-                list.createEl("li", {
-                    text: `${linkedFile.file.path}: ${
+                const listItem = list.createEl("li");
+                this.createClickableWikilink(listItem, linkedFile.file.path);
+                listItem.createEl("span", {
+                    text: `: ${linkedFile.backlinks.length} ${formatNoun(
+                        "backlink",
                         linkedFile.backlinks.length
-                    } ${formatNoun("backlink", linkedFile.backlinks.length)}`,
+                    )}`,
                 });
             }
         }
