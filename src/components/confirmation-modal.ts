@@ -1,4 +1,4 @@
-import { App, Modal, Setting, TFile } from "obsidian";
+import { App, Modal, Notice, Setting, TFile } from "obsidian";
 import { NoteToDelete } from "../classes/note-to-delete";
 import DeleteNotesPlugin from "../main";
 import { formatNoun } from "../utils/format-noun";
@@ -60,8 +60,15 @@ export class DeleteNotesConfirmationModal extends Modal {
     }
 
     async onDelete() {
-        for await (const note of this.notes) {
-            await note.delete();
+        try {
+            for await (const note of this.notes) {
+                await note.deleteBacklinks();
+            }
+            for await (const note of this.notes) {
+                await note.delete();
+            }
+        } catch (error) {
+            new Notice(`Failed to delete note: ${error.message}`);
         }
         this.close();
     }

@@ -25,7 +25,7 @@ export class NoteToDelete {
         }, [] as LinkedFile[]);
     }
 
-    async delete() {
+    async deleteBacklinks() {
         for await (const linkedFile of this.linkedFiles) {
             let content = await this.plugin.app.vault.read(linkedFile.file);
             for (const link of linkedFile.backlinks) {
@@ -34,13 +34,11 @@ export class NoteToDelete {
                     (link.displayText || link.link) +
                     content.slice(link.position.end.offset);
             }
-            try {
-                await this.plugin.app.vault.modify(linkedFile.file, content);
-            } catch {
-                // if this fails, we probably deleted the file already
-                // so we'll ignore it
-            }
+            await this.plugin.app.vault.modify(linkedFile.file, content);
         }
+    }
+
+    async delete() {
         switch (this.plugin.settings.deleteMode) {
             case DeleteMode.System: {
                 await this.plugin.app.vault.trash(this.file, true);
