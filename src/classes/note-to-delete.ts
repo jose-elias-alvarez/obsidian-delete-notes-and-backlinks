@@ -96,10 +96,12 @@ export class NoteToDelete {
         for await (const linkedFile of this.linkedFiles) {
             let content = await this.plugin.app.vault.read(linkedFile.file);
             for (const link of linkedFile.backlinks) {
-                content =
-                    content.slice(0, link.position.start.offset) +
-                    (link.displayText || link.link) +
-                    content.slice(link.position.end.offset);
+                // links have a position, but that position is cached,
+                // so we replace occurrences directly to account for multiple deletions in the same file
+                content = content.replace(
+                    link.original,
+                    link.displayText || link.link
+                );
             }
             await this.plugin.app.vault.modify(linkedFile.file, content);
         }
