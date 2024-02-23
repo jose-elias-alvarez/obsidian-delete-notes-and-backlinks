@@ -8,4 +8,7 @@ declare module "obsidian" {
               }
             | undefined;
     }
+    interface DataAdapter {
+        getBasePath: () => string;
+    }
 }

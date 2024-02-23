@@ -25,10 +25,37 @@ export class DeleteNotesPluginSettingTab extends PluginSettingTab {
                         [DeleteMode.Obsidian]:
                             "Move to Obsidian trash (.trash folder)",
                         [DeleteMode.Permanent]: "Permanently delete",
+                        [DeleteMode.MoveToVaultFolder]: "Move to vault folder",
+                        [DeleteMode.MoveToSystemFolder]:
+                            "Move to system folder",
                     })
                     .setValue(this.plugin.settings.deleteMode.toString())
                     .onChange(async (value) => {
                         this.plugin.settings.deleteMode = parseInt(value);
+                        await this.plugin.saveSettings();
+                    });
+            });
+
+        new Setting(containerEl)
+            .setName("Vault folder")
+            .setDesc("Path to folder within vault to move deleted files to")
+            .addText((text) => {
+                text.setPlaceholder("Archive")
+                    .setValue(this.plugin.settings.vaultFolder || "")
+                    .onChange(async (value) => {
+                        this.plugin.settings.vaultFolder = value;
+                        await this.plugin.saveSettings();
+                    });
+            });
+
+        new Setting(containerEl)
+            .setName("System folder")
+            .setDesc("Absolute path to system folder to move deleted files to")
+            .addText((text) => {
+                text.setPlaceholder("/Users/jose/Archive")
+                    .setValue(this.plugin.settings.systemFolder || "")
+                    .onChange(async (value) => {
+                        this.plugin.settings.systemFolder = value;
                         await this.plugin.saveSettings();
                     });
             });
