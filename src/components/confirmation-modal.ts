@@ -14,6 +14,21 @@ export class DeleteNotesConfirmationModal extends Modal {
         this.plugin = plugin;
     }
 
+    onSuccess() {
+        this.app.workspace.iterateAllLeaves((leaf) => {
+            const leafPath = leaf.getViewState().state.file;
+            if (this.notes.some((note) => leafPath === note.file.path)) {
+                leaf.detach();
+            }
+        });
+        new Notice(
+            `Deleted ${this.notes.length} ${formatNoun(
+                "note",
+                this.notes.length
+            )}`
+        );
+    }
+
     // workaround to open links from the modal
     // it's also possible to use real links + the obsidian URI scheme
     // but either way we need to hook into the event to close the modal,
@@ -67,12 +82,7 @@ export class DeleteNotesConfirmationModal extends Modal {
             for await (const note of this.notes) {
                 await note.delete();
             }
-            new Notice(
-                `Deleted ${this.notes.length} ${formatNoun(
-                    "note",
-                    this.notes.length
-                )}`
-            );
+            this.onSuccess();
         } catch (error) {
             new Notice(`Failed to delete note: ${error.message}`);
         }
