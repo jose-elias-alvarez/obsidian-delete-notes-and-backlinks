@@ -67,6 +67,12 @@ export class DeleteNotesConfirmationModal extends Modal {
             for await (const note of this.notes) {
                 await note.delete();
             }
+            new Notice(
+                `Deleted ${this.notes.length} ${formatNoun(
+                    "note",
+                    this.notes.length
+                )}`
+            );
         } catch (error) {
             new Notice(`Failed to delete note: ${error.message}`);
         }
